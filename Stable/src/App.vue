@@ -4,7 +4,7 @@ import Stable from "./components/stable.vue";
 
 <template>
   <div>
-    <h2>pete</h2>
+    <h2>SuperTable</h2>
     <Stable />
   </div>
 </template>
