@@ -9,19 +9,24 @@
     <div>
       <input type="button" value="Columnas" />
     </div>
-
     <a href="#miModal">Abrir Modal</a>
     <div id="miModal" class="modal">
       <div class="modal-contenido">
         <a href="#">X</a>
         <h2>Selector de Columnas</h2>
+        {{ sortasc }}
         <div>
           <table>
             <tr v-for="(header, index) in headers" :key="index">
               <td>
-                <input type="checkbox" @click="headersActions" />{{
-                  header.text
-                }}
+                <input
+                  type="checkbox"
+                  :id="header.value"
+                  :value="header"
+                  v-model="headersSelected"
+                  @click="this.preventOrder = true"
+                />
+                <label :for="header.value">{{ header.text }}</label>
               </td>
             </tr>
           </table>
@@ -52,7 +57,7 @@ import jsondata from "../assets/jsontest";
 import moment from "moment";
 
 export default {
-  data: () => {
+  data: function () {
     return {
       datos: jsondata.data(),
       headers: [
@@ -62,29 +67,27 @@ export default {
         { value: "isActive", text: "activo" },
         { value: "balance", text: "balance" },
       ],
-      headersSelected: [],
+      headersSelected: this.headers,
       sortby: null,
       sortasc: false,
+      preventOrder: false,
     };
   },
   computed: {
     tbodydata: function () {
       if (this.sortby) {
-        //   console.log(moment(new Date()).format("YYYY-MM-DDTHH:mm:ss.SSS"));
         if (this.fnSortByNumber(this.sortby)) {
           this.datos.sort(this.fnOrdenInt);
         } else {
           this.datos.sort(this.fnOrderString);
         }
-        // console.log(moment(new Date()).format("YYYY-MM-DDTHH:mm:ss.SSS"));
       }
+      if (!this.preventOrder)
+        if (!this.sortasc) this.datos = this.datos.reverse();
 
-      if (!this.sortasc) {
-        this.datos = this.datos.reverse();
-      }
       const bodydata = this.datos.map((x) => {
         let item = "";
-        this.headers.forEach((element) => {
+        this.headersSelected.forEach((element) => {
           item += `<td>${x[element.value]}</td>`;
         });
         return item;
@@ -114,13 +117,22 @@ export default {
       return verification;
     },
     fnSortHeaderByClick(val) {
+      this.preventOrder = false;
       this.sortasc = !this.sortasc;
       this.sortby = val;
+    },
+    fnSelectHeaders() {
+      // const ref = this.headers.filter((x) => x.value != "actions");
+      // this.headers = ref;
+      // this.headers.push({
+      //   text: "Acciones",
+      //   value: "actions",
+      //   sortable: false,
+      // });
     },
   },
   created: function () {
     this.headersSelected = this.headers;
-    //  console.log(this.sortby.reverse());
   },
 };
 </script>
