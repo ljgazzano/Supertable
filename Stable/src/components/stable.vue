@@ -9,7 +9,7 @@
     <div>
       <input type="button" value="Columnas" />
     </div>
-    <a href="#miModal">Abrir Modal</a>
+    <a href="#miModal" @click="fnPreventOrder">Abrir Modal</a>
     <div id="miModal" class="modal">
       <div class="modal-contenido">
         <a href="#">X</a>
@@ -24,7 +24,6 @@
                   :id="header.value"
                   :value="header"
                   v-model="headersSelected"
-                  @click="fnPreventOrder"
                 />
                 <label :for="header.value">{{ header.text }}</label>
               </td>
@@ -75,16 +74,16 @@ export default {
   },
   computed: {
     tbodydata: function () {
-      // if (!this.preventOrder) {
-      //   if (this.sortby) {
-      //     if (this.fnSortByNumber(this.sortby)) {
-      //       this.datos.sort(this.fnOrdenInt);
-      //     } else {
-      //       this.datos.sort(this.fnOrderString);
-      //     }
-      //   }
-      //   if (!this.sortasc) this.datos = this.datos.reverse();
-      // }
+      if (!this.preventOrder) {
+        if (this.sortby) {
+          if (this.fnSortByNumber(this.sortby)) {
+            this.datos.sort(this.fnOrdenInt);
+          } else {
+            this.datos.sort(this.fnOrderString);
+          }
+        }
+        if (!this.sortasc) this.datos = this.datos.reverse();
+      }
       const bodydata = this.datos.map((x) => {
         let item = "";
         this.headersSelected.forEach((element) => {
