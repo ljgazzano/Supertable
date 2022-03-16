@@ -14,7 +14,7 @@
       <div class="modal-contenido">
         <a href="#">X</a>
         <h2>Selector de Columnas</h2>
-        {{ sortasc }}
+
         <div>
           <table>
             <tr v-for="(header, index) in headers" :key="index">
@@ -24,7 +24,7 @@
                   :id="header.value"
                   :value="header"
                   v-model="headersSelected"
-                  @click="this.preventOrder = true"
+                  @click="fnPreventOrder"
                 />
                 <label :for="header.value">{{ header.text }}</label>
               </td>
@@ -67,7 +67,7 @@ export default {
         { value: "isActive", text: "activo" },
         { value: "balance", text: "balance" },
       ],
-      headersSelected: this.headers,
+      headersSelected: [],
       sortby: null,
       sortasc: false,
       preventOrder: false,
@@ -75,16 +75,16 @@ export default {
   },
   computed: {
     tbodydata: function () {
-      if (this.sortby) {
-        if (this.fnSortByNumber(this.sortby)) {
-          this.datos.sort(this.fnOrdenInt);
-        } else {
-          this.datos.sort(this.fnOrderString);
-        }
-      }
-      if (!this.preventOrder)
-        if (!this.sortasc) this.datos = this.datos.reverse();
-
+      // if (!this.preventOrder) {
+      //   if (this.sortby) {
+      //     if (this.fnSortByNumber(this.sortby)) {
+      //       this.datos.sort(this.fnOrdenInt);
+      //     } else {
+      //       this.datos.sort(this.fnOrderString);
+      //     }
+      //   }
+      //   if (!this.sortasc) this.datos = this.datos.reverse();
+      // }
       const bodydata = this.datos.map((x) => {
         let item = "";
         this.headersSelected.forEach((element) => {
@@ -129,6 +129,9 @@ export default {
       //   value: "actions",
       //   sortable: false,
       // });
+    },
+    fnPreventOrder() {
+      this.preventOrder = true;
     },
   },
   created: function () {

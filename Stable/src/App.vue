@@ -6,6 +6,7 @@ import Stable from "./components/stable.vue";
   <div>
     <h2>SuperTable</h2>
     <Stable />
+    
   </div>
 </template>
  
