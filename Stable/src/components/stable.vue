@@ -1,7 +1,15 @@
 <template>
   <div>
-    <select v-model="sortby">
-      <option value=""></option>
+    <label for="orden">Orden</label>
+    <select v-model="sortby" id="orden">
+      <option value="">No ordenar</option>
+      <option v-for="(item, index) in headers" :key="index" :value="item.value">
+        {{ item.text }}
+      </option>
+    </select>
+    <label for="grupo">Agrupar</label>
+    <select v-model="groupby" id="grupo">
+      <option value="">No agrupar</option>
       <option v-for="(item, index) in headers" :key="index" :value="item.value">
         {{ item.text }}
       </option>
@@ -11,14 +19,13 @@
       <input type="text" id="filter" v-model="filter" />
     </div>
     <div>
-      <input type="button" value="Columnas" />
+      <input type="colapsarbtn" value="Columnas" />
     </div>
     <a href="#miModal" @click="fnPreventOrder">Abrir Modal</a>
     <div id="miModal" class="modal">
       <div class="modal-contenido">
         <a href="#">X</a>
         <h2>Selector de Columnas</h2>
-
         <div>
           <table>
             <tr v-for="(header, index) in headers" :key="index">
@@ -38,7 +45,7 @@
         </div>
       </div>
     </div>
-    <table>
+    <table v-if="!groupby">
       <thead>
         <tr>
           <th
@@ -57,9 +64,26 @@
           </th>
         </tr>
       </thead>
-      <Tbody :html="tbodydata"></Tbody>
-      <!-- <tr v-for="(item, index) in tbodydata" :key="index" v-html="item"></tr> -->
+      <Tbody :html="tbodydata" v-if="optimized" style="color: green"></Tbody>
+      <tr
+        v-else
+        v-for="(item, index) in tbodydata"
+        :key="index"
+        v-html="item"
+        style="color: red"
+      ></tr>
     </table>
+
+    <div v-else>
+      <div class="">
+        <button class="" onclick="openCity('London')">London</button>
+      </div>
+
+      <div id="London" class="">
+        <h2>London</h2>
+        <p>London is the capital city of England.</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -72,7 +96,6 @@ export default {
   components: { Tbody },
   data: function () {
     return {
-      datos: jsonpoco.data(),
       headers: [
         { value: "_id", text: "ID" },
         { value: "index", text: "indice", type: "number" },
@@ -80,15 +103,20 @@ export default {
         { value: "isActive", text: "activo" },
         { value: "balance", text: "balance" },
       ],
+      datos: jsonpoco.data(),
+      filter: "",
+      groupby: null,
       headersSelected: [],
       sortby: null,
       sortasc: false,
       preventOrder: false,
-      filter: "",
+      optimized: false,
     };
   },
   computed: {
     tbodydata: function () {
+      const countHeaders = this.headersSelected.length;
+
       if (!this.preventOrder) {
         if (this.sortby) {
           if (this.fnSortByNumber(this.sortby)) {
@@ -99,22 +127,28 @@ export default {
         }
         if (!this.sortasc) this.datos = this.datos.reverse();
       }
-      let bodydata = "";
-      this.datos.forEach((x) => {
+
+      let bodydata = [];
+
+      this.datos.forEach((x, index) => {
         let item = "";
         this.headersSelected.forEach((element) => {
           item += `<td>${x[element.value]}</td>`;
         });
-        if (this.filter) {
-          if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
+
+        if (this.optimized) {
+          if (this.filter) {
+            if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
+          } else {
+            bodydata += "<tr>" + item + "</tr>";
+          }
         } else {
-          bodydata += "<tr>" + item + "</tr>";
+          if (this.filter) {
+            if (item.includes(this.filter)) bodydata.push(item);
+          } else {
+            bodydata.push(item);
+          }
         }
-        // if (this.filter) {
-        //   if (item.includes(this.filter)) bodydata.push(item);
-        // } else {
-        //   bodydata.push(item);
-        // }
       });
       return bodydata;
     },
@@ -145,17 +179,23 @@ export default {
       this.sortasc = !this.sortasc;
       this.sortby = val;
     },
-    fnSelectHeaders() {
-      // const ref = this.headers.filter((x) => x.value != "actions");
-      // this.headers = ref;
-      // this.headers.push({
-      //   text: "Acciones",
-      //   value: "actions",
-      //   sortable: false,
-      // });
-    },
     fnPreventOrder() {
       this.preventOrder = true;
+    },
+    fnRequireGroup(groupref, trdata, colspan, index) {
+      if (this.groupby) {
+        const gruppedhtml = `<tr><td colspan="${colspan}" class="tdgroupcontainer"><input type="checkbox" id="title${index}" /><label for="title${index}">Grupo ${groupref}</label><div class="content"><table>${trdata}</table></div></td></tr>`;
+        return gruppedhtml;
+      }
+      return trdata;
+    },
+    fnTabsGroup(cityName) {
+      var i;
+      var x = document.getElementsByClassName("city");
+      for (i = 0; i < x.length; i++) {
+        x[i].style.display = "none";
+      }
+      document.getElementById(cityName).style.display = "block";
     },
   },
   created: function () {
@@ -164,7 +204,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style  >
 .modal-contenido {
   background-color: aqua;
   width: 300px;
@@ -202,23 +242,59 @@ export default {
 
 @keyframes rotationdesc {
   from {
-    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
   }
   to {
-    -webkit-transform: rotate(270deg);
+    transform: rotate(270deg);
   }
 }
 
 @keyframes rotationasc {
   from {
-    -webkit-transform: rotate(270deg);
+    transform: rotate(270deg);
   }
   to {
-    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
   }
 }
 
 th {
   cursor: pointer;
+}
+
+/* accordions */
+.tdgroupcontainer input {
+  display: none;
+}
+
+.tdgroupcontainer label {
+  display: block;
+  padding: 8px 22px;
+  margin: 0 0 1px 0;
+  cursor: pointer;
+  background: #6aab95;
+  border-radius: 3px;
+  color: #fff;
+  transition: ease 0.5s;
+}
+
+.tdgroupcontainer label:hover {
+  background: #4e8774;
+}
+
+.tdgroupcontainer .content {
+  background: #e2e5f6;
+  padding: 10px 25px;
+  border: 1px solid #a7a7a7;
+  margin: 0 0 1px 0;
+  border-radius: 3px;
+}
+
+.tdgroupcontainer input + label + .content {
+  display: none;
+}
+
+.tdgroupcontainer input:checked + label + .content {
+  display: block;
 }
 </style>
