@@ -7,6 +7,10 @@
       </option>
     </select>
     <div>
+      <label for="filter">Filtro</label>
+      <input type="text" id="filter" v-model="filter" />
+    </div>
+    <div>
       <input type="button" value="Columnas" />
     </div>
     <a href="#miModal" @click="fnPreventOrder">Abrir Modal</a>
@@ -19,13 +23,15 @@
           <table>
             <tr v-for="(header, index) in headers" :key="index">
               <td>
-                <input
-                  type="checkbox"
-                  :id="header.value"
-                  :value="header"
-                  v-model="headersSelected"
-                />
-                <label :for="header.value">{{ header.text }}</label>
+                <div>
+                  <input
+                    type="checkbox"
+                    :id="header.value"
+                    :value="header"
+                    v-model="headersSelected"
+                  />
+                  <label :for="header.value">{{ header.text }}</label>
+                </div>
               </td>
             </tr>
           </table>
@@ -41,24 +47,32 @@
             @click="fnSortHeaderByClick(header.value)"
           >
             {{ header.text }}
+            <img
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOAQMAAAAlhr+SAAAAAXNSR0IArs4c6QAAAAZQTFRFAAAAAAAApWe5zwAAAAF0Uk5TAEDm2GYAAAAfSURBVAjXY2CAAeYGBsYDDAwPGOw/gBCQAeQCBWEAAIj7Bqe8t8xtAAAAAElFTkSuQmCC"
+              alt=""
+              class=""
+              v-bind:class="{ iconsortasc: sortasc, iconsortdesc: !sortasc }"
+              v-if="sortby == header.value"
+            />
           </th>
         </tr>
       </thead>
-      <tbody>
-        <tr v-for="(item, index) in tbodydata" :key="index" v-html="item"></tr>
-      </tbody>
+      <Tbody :html="tbodydata"></Tbody>
+      <!-- <tr v-for="(item, index) in tbodydata" :key="index" v-html="item"></tr> -->
     </table>
   </div>
 </template>
 
 <script>
-import jsondata from "../assets/jsontest";
-import moment from "moment";
+import jsonmucho from "../assets/generated.json";
+import jsonpoco from "../assets/jsontest";
+import Tbody from "./tbody.vue";
 
 export default {
+  components: { Tbody },
   data: function () {
     return {
-      datos: jsondata.data(),
+      datos: jsonpoco.data(),
       headers: [
         { value: "_id", text: "ID" },
         { value: "index", text: "indice", type: "number" },
@@ -70,6 +84,7 @@ export default {
       sortby: null,
       sortasc: false,
       preventOrder: false,
+      filter: "",
     };
   },
   computed: {
@@ -84,12 +99,22 @@ export default {
         }
         if (!this.sortasc) this.datos = this.datos.reverse();
       }
-      const bodydata = this.datos.map((x) => {
+      let bodydata = "";
+      this.datos.forEach((x) => {
         let item = "";
         this.headersSelected.forEach((element) => {
           item += `<td>${x[element.value]}</td>`;
         });
-        return item;
+        if (this.filter) {
+          if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
+        } else {
+          bodydata += "<tr>" + item + "</tr>";
+        }
+        // if (this.filter) {
+        //   if (item.includes(this.filter)) bodydata.push(item);
+        // } else {
+        //   bodydata.push(item);
+        // }
       });
       return bodydata;
     },
@@ -161,5 +186,39 @@ export default {
 #miModal:target {
   opacity: 1;
   pointer-events: auto;
+}
+
+.iconsortasc {
+  transform: rotate(90deg);
+  animation: rotationasc 0.3s;
+  animation-fill-mode: forwards;
+}
+
+.iconsortdesc {
+  transform: rotate(90deg);
+  animation: rotationdesc 0.3s;
+  animation-fill-mode: forwards;
+}
+
+@keyframes rotationdesc {
+  from {
+    -webkit-transform: rotate(90deg);
+  }
+  to {
+    -webkit-transform: rotate(270deg);
+  }
+}
+
+@keyframes rotationasc {
+  from {
+    -webkit-transform: rotate(270deg);
+  }
+  to {
+    -webkit-transform: rotate(90deg);
+  }
+}
+
+th {
+  cursor: pointer;
 }
 </style>
