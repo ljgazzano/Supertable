@@ -1,6 +1,5 @@
 <template>
   <div>
-    <input type="button" value="Agrupar" @click="fnRenderGroupTabs()" />
     <label for="orden">Orden</label>
     <select v-model="sortby" id="orden">
       <option value="">No ordenar</option>
@@ -15,6 +14,7 @@
         {{ item.text }}
       </option>
     </select>
+
     <div>
       <label for="filter">Filtro</label>
       <input type="text" id="filter" v-model="filter" />
@@ -47,50 +47,67 @@
       </div>
     </div>
 
-    <table v-if="!groupby">
-      <thead>
-        <tr>
-          <th
-            v-for="(header, index) in headersSelected"
+    <div>
+      <div>
+        <div v-if="!varListGroupsTabsLimitExceded" class="tabsgrouping">
+          <div
+            v-for="(head, index) in varListGroupsTabs"
             :key="index"
-            @click="fnSortHeaderByClick(header.value)"
+            class="tabsgroupbtns"
           >
-            {{ header.text }}
-            <img
-              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOAQMAAAAlhr+SAAAAAXNSR0IArs4c6QAAAAZQTFRFAAAAAAAApWe5zwAAAAF0Uk5TAEDm2GYAAAAfSURBVAjXY2CAAeYGBsYDDAwPGOw/gBCQAeQCBWEAAIj7Bqe8t8xtAAAAAElFTkSuQmCC"
-              alt=""
-              class=""
-              v-bind:class="{ iconsortasc: sortasc, iconsortdesc: !sortasc }"
-              v-if="sortby == header.value"
-            />
-          </th>
-        </tr>
-      </thead>
-      <Tbody :html="cmTbodydata" v-if="optimized" style="color: green"></Tbody>
-      <tr
-        v-else
-        v-for="(item, index) in cmTbodydata"
-        :key="index"
-        v-html="item"
-        style="color: red"
-      ></tr>
-    </table>
-
-    <div v-else>
-      <div v-if="!varListGroupsTabsLimitExceded" class="tabsgrouping">
-        <div v-for="(head, index) in varListGroupsTabs" :key="index">
-          <button class="" @click="fnTabsGroup(head)">{{ head }}</button>
-        </div>
-        <div v-for="(head, index) in varListGroupsTabs" :key="index">
-          <div :id="head" class="grouptabbtn">
-            <h2>{{ head }}</h2>
-            <p>Solapa de {{ head }}.</p>
+            <button @click="varGroupTabSelected = head" :value="head">
+              {{ head }}
+            </button>
           </div>
+          <br />
+
+          <!-- <div
+            v-for="(head, index) in varListGroupsTabs"
+            :key="index"
+            class="tabsgroupcontent"
+          >
+            <div :id="head" class="tabsgroupcontentdata">
+              <h2>{{ head }}</h2>
+              <p>Solapa de {{ head }}.</p>
+            </div>
+          </div> -->
+        </div>
+        <div v-else>
+          <p>El número de grupos excede el límite máximo</p>
         </div>
       </div>
-      <div v-else>
-        <p>El número de grupos excede el límite máximo</p>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th
+              v-for="(header, index) in headersSelected"
+              :key="index"
+              @click="fnSortHeaderByClick(header.value)"
+            >
+              {{ header.text }}
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOAQMAAAAlhr+SAAAAAXNSR0IArs4c6QAAAAZQTFRFAAAAAAAApWe5zwAAAAF0Uk5TAEDm2GYAAAAfSURBVAjXY2CAAeYGBsYDDAwPGOw/gBCQAeQCBWEAAIj7Bqe8t8xtAAAAAElFTkSuQmCC"
+                alt=""
+                class=""
+                v-bind:class="{ iconsortasc: sortasc, iconsortdesc: !sortasc }"
+                v-if="sortby == header.value"
+              />
+            </th>
+          </tr>
+        </thead>
+        <Tbody
+          :html="cmTbodydata"
+          v-if="optimized"
+          style="color: green"
+        ></Tbody>
+        <tr
+          v-else
+          v-for="(item, index) in cmTbodydata"
+          :key="index"
+          v-html="item"
+          style="color: red"
+        ></tr>
+      </table>
     </div>
   </div>
 </template>
@@ -113,20 +130,28 @@ export default {
       ],
       datos: jsonpoco.data(),
       filter: "",
-      groupby: "isActive",
+      groupby: null,
       headersSelected: [],
       sortby: null,
       sortasc: false,
       preventOrder: false,
-      optimized: false,
+      optimized: true,
       limitGroupsQuantity: 20,
+      arrGroupData: null,
       varListGroupsTabs: null,
       varListGroupsTabsLimitExceded: false,
+      varGroupTabSelected: null,
     };
   },
   computed: {
     cmTbodydata: function () {
-      return this.fnRenderTable(this.datos);
+      if (!this.groupby) {
+        return this.fnRenderTable(this.datos);
+      } else {
+        this.fnRenderGroupTabs();
+
+        //        return this.fnRenderTable(this.datos);
+      }
     },
   },
   methods: {
@@ -158,16 +183,9 @@ export default {
     fnPreventOrder() {
       this.preventOrder = true;
     },
-    fnRequireGroup(groupref, trdata, colspan, index) {
-      if (this.groupby) {
-        const gruppedhtml = `<tr><td colspan="${colspan}" class="tdgroupcontainer"><input type="checkbox" id="title${index}" /><label for="title${index}">Grupo ${groupref}</label><div class="content"><table>${trdata}</table></div></td></tr>`;
-        return gruppedhtml;
-      }
-      return trdata;
-    },
     fnTabsGroup(tab) {
       var i;
-      var x = document.getElementsByClassName("grouptabbtn");
+      var x = document.getElementsByClassName("tabsgroupcontentdata");
       for (i = 0; i < x.length; i++) {
         x[i].style.display = "none";
       }
@@ -219,11 +237,12 @@ export default {
       return bodydata;
     },
     fnRenderGroupTabs() {
-      const data = this.fnGroupData(this.groupby);
-      const countgroups = Object.keys(data).length;
+      this.arrGroupData = this.fnGroupData(this.groupby);
+      const countgroups = Object.keys(this.arrGroupData).length;
       if (countgroups < this.limitGroupsQuantity) {
         this.varListGroupsTabsLimitExceded = false;
-        this.varListGroupsTabs = Object.keys(data);
+        this.varListGroupsTabs = Object.keys(this.arrGroupData);
+        return;
       } else {
         this.varListGroupsTabsLimitExceded = true;
       }
@@ -231,6 +250,12 @@ export default {
   },
   created: function () {
     this.headersSelected = this.headers;
+  },
+  watch: {
+    varGroupTabSelected: function (val) {
+      console.log(this.arrGroupData);
+      this.cmTbodydata = this.fnRenderTable(this.arrGroupData[val]);
+    },
   },
 };
 </script>
@@ -294,4 +319,62 @@ th {
 }
 
 /* tabs */
+
+.tabsgrouping {
+}
+.tabsgroupbtns {
+  float: left;
+}
+
+.tabsgroupbtns button {
+  max-width: 200px;
+  width: 163px;
+  background: #383434;
+  color: white;
+  height: 33px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  text-transform: capitalize;
+  border: none;
+}
+
+.tabsgroupbtns button:hover {
+  background: #929191;
+  color: white;
+  font-size: 105%;
+  animation: tabselect 1s;
+  animation-fill-mode: forwards;
+}
+
+.tabsgroupbtns button:active {
+  background: #a55555;
+  color: white;
+  font-size: 105%;
+  animation: tabselected;
+  animation-fill-mode: forwards;
+}
+
+@keyframes tabselect {
+  from {
+    transform: scale(100%);
+  }
+  to {
+    transform: scale(110%);
+  }
+}
+
+@keyframes tabselected {
+  from {
+    background-color: #383434;
+  }
+  to {
+    background-color: red;
+  }
+}
+
+.tabsgroupcontent {
+}
+.tabsgroupcontentdata {
+  display: none;
+}
 </style>
