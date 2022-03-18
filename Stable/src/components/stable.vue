@@ -149,8 +149,9 @@ export default {
         return this.fnRenderTable(this.datos);
       } else {
         this.fnRenderGroupTabs();
-
-        //        return this.fnRenderTable(this.datos);
+      }
+      if (this.varGroupTabSelected) {
+        return this.fnRenderTable(this.arrGroupData[this.varGroupTabSelected]);
       }
     },
   },
@@ -250,12 +251,6 @@ export default {
   },
   created: function () {
     this.headersSelected = this.headers;
-  },
-  watch: {
-    varGroupTabSelected: function (val) {
-      console.log(this.arrGroupData);
-      this.cmTbodydata = this.fnRenderTable(this.arrGroupData[val]);
-    },
   },
 };
 </script>
