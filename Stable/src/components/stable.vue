@@ -1,5 +1,6 @@
 <template>
   <div>
+    <input type="button" value="Agrupar" @click="fnRenderGroupTabs()" />
     <label for="orden">Orden</label>
     <select v-model="sortby" id="orden">
       <option value="">No ordenar</option>
@@ -45,6 +46,7 @@
         </div>
       </div>
     </div>
+
     <table v-if="!groupby">
       <thead>
         <tr>
@@ -64,10 +66,10 @@
           </th>
         </tr>
       </thead>
-      <Tbody :html="tbodydata" v-if="optimized" style="color: green"></Tbody>
+      <Tbody :html="cmTbodydata" v-if="optimized" style="color: green"></Tbody>
       <tr
         v-else
-        v-for="(item, index) in tbodydata"
+        v-for="(item, index) in cmTbodydata"
         :key="index"
         v-html="item"
         style="color: red"
@@ -75,13 +77,19 @@
     </table>
 
     <div v-else>
-      <div class="">
-        <button class="" onclick="openCity('London')">London</button>
+      <div v-if="!varListGroupsTabsLimitExceded" class="tabsgrouping">
+        <div v-for="(head, index) in varListGroupsTabs" :key="index">
+          <button class="" @click="fnTabsGroup(head)">{{ head }}</button>
+        </div>
+        <div v-for="(head, index) in varListGroupsTabs" :key="index">
+          <div :id="head" class="grouptabbtn">
+            <h2>{{ head }}</h2>
+            <p>Solapa de {{ head }}.</p>
+          </div>
+        </div>
       </div>
-
-      <div id="London" class="">
-        <h2>London</h2>
-        <p>London is the capital city of England.</p>
+      <div v-else>
+        <p>El número de grupos excede el límite máximo</p>
       </div>
     </div>
   </div>
@@ -105,52 +113,20 @@ export default {
       ],
       datos: jsonpoco.data(),
       filter: "",
-      groupby: null,
+      groupby: "isActive",
       headersSelected: [],
       sortby: null,
       sortasc: false,
       preventOrder: false,
       optimized: false,
+      limitGroupsQuantity: 20,
+      varListGroupsTabs: null,
+      varListGroupsTabsLimitExceded: false,
     };
   },
   computed: {
-    tbodydata: function () {
-      const countHeaders = this.headersSelected.length;
-
-      if (!this.preventOrder) {
-        if (this.sortby) {
-          if (this.fnSortByNumber(this.sortby)) {
-            this.datos.sort(this.fnOrdenInt);
-          } else {
-            this.datos.sort(this.fnOrderString);
-          }
-        }
-        if (!this.sortasc) this.datos = this.datos.reverse();
-      }
-
-      let bodydata = [];
-
-      this.datos.forEach((x, index) => {
-        let item = "";
-        this.headersSelected.forEach((element) => {
-          item += `<td>${x[element.value]}</td>`;
-        });
-
-        if (this.optimized) {
-          if (this.filter) {
-            if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
-          } else {
-            bodydata += "<tr>" + item + "</tr>";
-          }
-        } else {
-          if (this.filter) {
-            if (item.includes(this.filter)) bodydata.push(item);
-          } else {
-            bodydata.push(item);
-          }
-        }
-      });
-      return bodydata;
+    cmTbodydata: function () {
+      return this.fnRenderTable(this.datos);
     },
   },
   methods: {
@@ -189,13 +165,68 @@ export default {
       }
       return trdata;
     },
-    fnTabsGroup(cityName) {
+    fnTabsGroup(tab) {
       var i;
-      var x = document.getElementsByClassName("city");
+      var x = document.getElementsByClassName("grouptabbtn");
       for (i = 0; i < x.length; i++) {
         x[i].style.display = "none";
       }
-      document.getElementById(cityName).style.display = "block";
+      document.getElementById(tab).style.display = "block";
+    },
+    fnGroupData(groupby) {
+      const result = this.datos.reduce(function (r, a) {
+        r[a[groupby]] = r[a[groupby]] || [];
+        r[a[groupby]].push(a);
+        return r;
+      }, Object.create(null));
+      return result;
+    },
+    fnRenderTable(datos) {
+      const countHeaders = this.headersSelected.length;
+      if (!this.preventOrder) {
+        if (this.sortby) {
+          if (this.fnSortByNumber(this.sortby)) {
+            datos.sort(this.fnOrdenInt);
+          } else {
+            datos.sort(this.fnOrderString);
+          }
+        }
+        if (!this.sortasc) datos = datos.reverse();
+      }
+
+      let bodydata = [];
+
+      datos.forEach((x, index) => {
+        let item = "";
+        this.headersSelected.forEach((element) => {
+          item += `<td>${x[element.value]}</td>`;
+        });
+
+        if (this.optimized) {
+          if (this.filter) {
+            if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
+          } else {
+            bodydata += "<tr>" + item + "</tr>";
+          }
+        } else {
+          if (this.filter) {
+            if (item.includes(this.filter)) bodydata.push(item);
+          } else {
+            bodydata.push(item);
+          }
+        }
+      });
+      return bodydata;
+    },
+    fnRenderGroupTabs() {
+      const data = this.fnGroupData(this.groupby);
+      const countgroups = Object.keys(data).length;
+      if (countgroups < this.limitGroupsQuantity) {
+        this.varListGroupsTabsLimitExceded = false;
+        this.varListGroupsTabs = Object.keys(data);
+      } else {
+        this.varListGroupsTabsLimitExceded = true;
+      }
     },
   },
   created: function () {
@@ -262,39 +293,5 @@ th {
   cursor: pointer;
 }
 
-/* accordions */
-.tdgroupcontainer input {
-  display: none;
-}
-
-.tdgroupcontainer label {
-  display: block;
-  padding: 8px 22px;
-  margin: 0 0 1px 0;
-  cursor: pointer;
-  background: #6aab95;
-  border-radius: 3px;
-  color: #fff;
-  transition: ease 0.5s;
-}
-
-.tdgroupcontainer label:hover {
-  background: #4e8774;
-}
-
-.tdgroupcontainer .content {
-  background: #e2e5f6;
-  padding: 10px 25px;
-  border: 1px solid #a7a7a7;
-  margin: 0 0 1px 0;
-  border-radius: 3px;
-}
-
-.tdgroupcontainer input + label + .content {
-  display: none;
-}
-
-.tdgroupcontainer input:checked + label + .content {
-  display: block;
-}
+/* tabs */
 </style>
