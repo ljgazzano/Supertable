@@ -34,13 +34,7 @@ export default {
   <div>
     <h2>SuperTable</h2>
     <input type="button" value="Consumir" @click="api()" />
-    <Stable
-      :headers="headers"
-      :items="items"
-      :disableOptimized="true"
-      :disableFilter="false"
-      :disableSort="false"
-    />
+    <Stable :headers="headers" :items="items" />
   </div>
 </template>
  

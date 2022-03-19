@@ -1,19 +1,18 @@
 <template>
   <div>
-    <label for="orden">Orden</label>
-    <select v-model="sortby" id="orden">
-      <option value="">No ordenar</option>
-      <option v-for="(item, index) in headers" :key="index" :value="item.value">
-        {{ item.text }}
-      </option>
-    </select>
-    <label for="grupo">Agrupar</label>
-    <select v-model="groupby" id="grupo">
-      <option value="">No agrupar</option>
-      <option v-for="(item, index) in headers" :key="index" :value="item.value">
-        {{ item.text }}
-      </option>
-    </select>
+    <div v-if="!cmDisableGroup">
+      <label for="grupo">Agrupar</label>
+      <select v-model="groupby" id="grupo">
+        <option value="">No agrupar</option>
+        <option
+          v-for="(item, index) in headers"
+          :key="index"
+          :value="item.value"
+        >
+          {{ item.text }}
+        </option>
+      </select>
+    </div>
 
     <div v-if="cmDisableFilter">
       <label for="filter">Filtro</label>
@@ -22,27 +21,29 @@
     <div>
       <input type="colapsarbtn" value="Columnas" />
     </div>
-    <a href="#miModal" @click="fnPreventOrder">Abrir Modal</a>
-    <div id="miModal" class="modal">
-      <div class="modal-contenido">
-        <a href="#">X</a>
-        <h2>Selector de Columnas</h2>
-        <div>
-          <table>
-            <tr v-for="(header, index) in headers" :key="index">
-              <td>
-                <div>
-                  <input
-                    type="checkbox"
-                    :id="header.value"
-                    :value="header"
-                    v-model="headersSelected"
-                  />
-                  <label :for="header.value">{{ header.text }}</label>
-                </div>
-              </td>
-            </tr>
-          </table>
+    <div v-if="!cmDisableChangeColumns">
+      <a href="#miModal" @click="fnPreventOrder">Abrir Modal</a>
+      <div id="miModal" class="modal">
+        <div class="modal-contenido">
+          <a href="#">X</a>
+          <h2>Selector de Columnas</h2>
+          <div>
+            <table>
+              <tr v-for="(header, index) in headers" :key="index">
+                <td>
+                  <div>
+                    <input
+                      type="checkbox"
+                      :id="header.value"
+                      :value="header"
+                      v-model="headersSelected"
+                    />
+                    <label :for="header.value">{{ header.text }}</label>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -60,17 +61,6 @@
             </button>
           </div>
           <br />
-
-          <!-- <div
-            v-for="(head, index) in varListGroupsTabs"
-            :key="index"
-            class="tabsgroupcontent"
-          >
-            <div :id="head" class="tabsgroupcontentdata">
-              <h2>{{ head }}</h2>
-              <p>Solapa de {{ head }}.</p>
-            </div>
-          </div> -->
         </div>
         <div v-else>
           <p>El número de grupos excede el límite máximo</p>
@@ -134,6 +124,8 @@ export default {
     disableFilter: Boolean,
     disableSort: Boolean,
     disableHeader: Boolean,
+    disableGroup: Boolean,
+    disableChangeColumns: Boolean,
   },
   data: function () {
     return {
@@ -174,6 +166,12 @@ export default {
     },
     cmDisableHeader: function () {
       return !this.disableHeader;
+    },
+    cmDisableGroup: function () {
+      return this.disableGroup;
+    },
+    cmDisableChangeColumns: function () {
+      return this.disableChangeColumns;
     },
   },
   methods: {
