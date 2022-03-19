@@ -15,7 +15,7 @@
       </option>
     </select>
 
-    <div>
+    <div v-if="cmDisableFilter">
       <label for="filter">Filtro</label>
       <input type="text" id="filter" v-model="filter" />
     </div>
@@ -77,27 +77,36 @@
         </div>
       </div>
       <table>
-        <thead>
+        <thead v-if="cmDisableHeader">
           <tr>
             <th
               v-for="(header, index) in headersSelected"
               :key="index"
               @click="fnSortHeaderByClick(header.value)"
+              v-bind:class="{
+                pointer: !cmDisableSort,
+                nopointer: cmDisableSort,
+              }"
             >
               {{ header.text }}
-              <img
-                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOAQMAAAAlhr+SAAAAAXNSR0IArs4c6QAAAAZQTFRFAAAAAAAApWe5zwAAAAF0Uk5TAEDm2GYAAAAfSURBVAjXY2CAAeYGBsYDDAwPGOw/gBCQAeQCBWEAAIj7Bqe8t8xtAAAAAElFTkSuQmCC"
-                alt=""
-                class=""
-                v-bind:class="{ iconsortasc: sortasc, iconsortdesc: !sortasc }"
-                v-if="sortby == header.value"
-              />
+              <span v-if="!cmDisableSort">
+                <img
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOAQMAAAAlhr+SAAAAAXNSR0IArs4c6QAAAAZQTFRFAAAAAAAApWe5zwAAAAF0Uk5TAEDm2GYAAAAfSURBVAjXY2CAAeYGBsYDDAwPGOw/gBCQAeQCBWEAAIj7Bqe8t8xtAAAAAElFTkSuQmCC"
+                  alt=""
+                  class=""
+                  v-bind:class="{
+                    iconsortasc: sortasc,
+                    iconsortdesc: !sortasc,
+                  }"
+                  v-if="sortby == header.value"
+                />
+              </span>
             </th>
           </tr>
         </thead>
         <Tbody
           :html="cmTbodydata"
-          v-if="optimized"
+          v-if="cmDisableOptimized"
           style="color: green"
         ></Tbody>
         <tr
@@ -113,30 +122,27 @@
 </template>
 
 <script>
-import jsonmucho from "../assets/generated.json";
-import jsonpoco from "../assets/jsontest";
 import Tbody from "./tbody.vue";
 
 export default {
   components: { Tbody },
+  props: {
+    headers: Array,
+    items: Array,
+    limitGroups: Number,
+    disableOptimized: Boolean,
+    disableFilter: Boolean,
+    disableSort: Boolean,
+    disableHeader: Boolean,
+  },
   data: function () {
     return {
-      headers: [
-        { value: "_id", text: "ID" },
-        { value: "index", text: "indice", type: "number" },
-        { value: "guid", text: "guid" },
-        { value: "isActive", text: "activo" },
-        { value: "balance", text: "balance" },
-      ],
-      datos: jsonpoco.data(),
       filter: "",
       groupby: null,
       headersSelected: [],
       sortby: null,
       sortasc: false,
       preventOrder: false,
-      optimized: true,
-      limitGroupsQuantity: 20,
       arrGroupData: null,
       varListGroupsTabs: null,
       varListGroupsTabsLimitExceded: false,
@@ -146,13 +152,28 @@ export default {
   computed: {
     cmTbodydata: function () {
       if (!this.groupby) {
-        return this.fnRenderTable(this.datos);
+        return this.fnRenderTable(this.items);
       } else {
         this.fnRenderGroupTabs();
       }
       if (this.varGroupTabSelected) {
         return this.fnRenderTable(this.arrGroupData[this.varGroupTabSelected]);
       }
+    },
+    cmLimitGroupsQuantity: function () {
+      return this.limitGroups || 10;
+    },
+    cmDisableOptimized: function () {
+      return !this.disableOptimized;
+    },
+    cmDisableFilter: function () {
+      return !this.disableFilter;
+    },
+    cmDisableSort: function () {
+      return this.disableSort;
+    },
+    cmDisableHeader: function () {
+      return !this.disableHeader;
     },
   },
   methods: {
@@ -177,9 +198,11 @@ export default {
       return verification;
     },
     fnSortHeaderByClick(val) {
-      this.preventOrder = false;
-      this.sortasc = !this.sortasc;
-      this.sortby = val;
+      if (!this.cmDisableSort) {
+        this.preventOrder = false;
+        this.sortasc = !this.sortasc;
+        this.sortby = val;
+      }
     },
     fnPreventOrder() {
       this.preventOrder = true;
@@ -193,7 +216,7 @@ export default {
       document.getElementById(tab).style.display = "block";
     },
     fnGroupData(groupby) {
-      const result = this.datos.reduce(function (r, a) {
+      const result = this.items.reduce(function (r, a) {
         r[a[groupby]] = r[a[groupby]] || [];
         r[a[groupby]].push(a);
         return r;
@@ -221,7 +244,7 @@ export default {
           item += `<td>${x[element.value]}</td>`;
         });
 
-        if (this.optimized) {
+        if (this.cmDisableOptimized) {
           if (this.filter) {
             if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
           } else {
@@ -240,7 +263,7 @@ export default {
     fnRenderGroupTabs() {
       this.arrGroupData = this.fnGroupData(this.groupby);
       const countgroups = Object.keys(this.arrGroupData).length;
-      if (countgroups < this.limitGroupsQuantity) {
+      if (countgroups < this.cmLimitGroupsQuantity) {
         this.varListGroupsTabsLimitExceded = false;
         this.varListGroupsTabs = Object.keys(this.arrGroupData);
         return;
@@ -249,7 +272,8 @@ export default {
       }
     },
   },
-  created: function () {
+  created: async function () {
+    console.log(this.cmLimitGroupsQuantity);
     this.headersSelected = this.headers;
   },
 };
@@ -309,10 +333,13 @@ export default {
   }
 }
 
-th {
+.pointer {
   cursor: pointer;
 }
 
+.nopointer {
+  cursor: default;
+}
 /* tabs */
 
 .tabsgrouping {
