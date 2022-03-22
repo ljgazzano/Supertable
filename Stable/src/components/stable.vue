@@ -94,18 +94,12 @@
             </th>
           </tr>
         </thead>
-        <Tbody
-          :html="cmTbodydata"
-          v-if="cmDisableOptimized"
-          style="color: green"
-        ></Tbody>
-        <tr
-          v-else
-          v-for="(item, index) in cmTbodydata"
-          :key="index"
-          v-html="item"
-          style="color: red"
-        ></tr>
+
+        <tr v-for="(items, i) in cmTbodydata" :key="i">
+          <td v-for="(item, x) in items" :key="x">
+            {{item}}
+          </td>
+        </tr>
       </table>
     </div>
   </div>
@@ -120,7 +114,6 @@ export default {
     headers: Array,
     items: Array,
     limitGroups: Number,
-    disableOptimized: Boolean,
     disableFilter: Boolean,
     disableSort: Boolean,
     disableHeader: Boolean,
@@ -155,9 +148,7 @@ export default {
     cmLimitGroupsQuantity: function () {
       return this.limitGroups || 10;
     },
-    cmDisableOptimized: function () {
-      return !this.disableOptimized;
-    },
+
     cmDisableFilter: function () {
       return !this.disableFilter;
     },
@@ -222,7 +213,6 @@ export default {
       return result;
     },
     fnRenderTable(datos) {
-      const countHeaders = this.headersSelected.length;
       if (!this.preventOrder) {
         if (this.sortby) {
           if (this.fnSortByNumber(this.sortby)) {
@@ -233,31 +223,52 @@ export default {
         }
         if (!this.sortasc) datos = datos.reverse();
       }
-
-      let bodydata = [];
-
-      datos.forEach((x, index) => {
-        let item = "";
+      const bodydata = datos.map((x) => {
+        let item = {};
         this.headersSelected.forEach((element) => {
-          item += `<td>${x[element.value]}</td>`;
+          item[element.value] = x[element.value];
         });
-
-        if (this.cmDisableOptimized) {
-          if (this.filter) {
-            if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
-          } else {
-            bodydata += "<tr>" + item + "</tr>";
-          }
-        } else {
-          if (this.filter) {
-            if (item.includes(this.filter)) bodydata.push(item);
-          } else {
-            bodydata.push(item);
-          }
-        }
+        return item;
       });
       return bodydata;
     },
+    // fnRenderTable(datos) {
+    //   const countHeaders = this.headersSelected.length;
+    //   if (!this.preventOrder) {
+    //     if (this.sortby) {
+    //       if (this.fnSortByNumber(this.sortby)) {
+    //         datos.sort(this.fnOrdenInt);
+    //       } else {
+    //         datos.sort(this.fnOrderString);
+    //       }
+    //     }
+    //     if (!this.sortasc) datos = datos.reverse();
+    //   }
+
+    //   let bodydata = [];
+
+    //   datos.forEach((x, index) => {
+    //     let item = "";
+    //     this.headersSelected.forEach((element) => {
+    //       item += `<td>${x[element.value]}</td>`;
+    //     });
+
+    //     if (this.cmDisableOptimized) {
+    //       if (this.filter) {
+    //         if (item.includes(this.filter)) bodydata += "<tr>" + item + "</tr>";
+    //       } else {
+    //         bodydata += "<tr>" + item + "</tr>";
+    //       }
+    //     } else {
+    //       if (this.filter) {
+    //         if (item.includes(this.filter)) bodydata.push(item);
+    //       } else {
+    //         bodydata.push(item);
+    //       }
+    //     }
+    //   });
+    //   return bodydata;
+    // },
     fnRenderGroupTabs() {
       this.arrGroupData = this.fnGroupData(this.groupby);
       const countgroups = Object.keys(this.arrGroupData).length;

@@ -25,7 +25,9 @@ export default {
       };
       const datos = await axios(config);
       this.items = datos.data;
+      console.log('respuesta recibida')
     },
+
   },
 };
 </script>
