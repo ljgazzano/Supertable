@@ -29,8 +29,8 @@ export default {
       this.items = datos.data;
       this.load = false;
     },
-    logselected(val) {
-      console.log(val);
+    logselected(data) {
+      console.log(data);
     },
   },
 };

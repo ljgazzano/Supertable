@@ -1,11 +1,5 @@
 <template>
   <div>
-    ava{{varInternalTimer}}
-    <input
-      type="button"
-      value="test loading process"
-      @click="varInternalTimer = !varInternalTimer"
-    />
     <div class="waitAction" v-if="varWaitAction">
       <p>loading process...</p>
     </div>
@@ -131,7 +125,10 @@
               />
             </td>
             <td v-for="(item, x) in items" :key="x">
-              {{ item }}
+              <div v-if="extensibleRow"></div>
+              <div v-else>
+                {{ item }}
+              </div>
             </td>
           </tr>
         </tbody>
@@ -157,6 +154,7 @@ export default {
     letRowSelect: Boolean,
     RowSelectObject: Boolean,
     loading: Boolean,
+    extensibleRow: Boolean,
   },
   data: function () {
     return {
@@ -175,7 +173,7 @@ export default {
       varIsCheckAll: false,
       varInternalTimer: false,
       varWaitAction: false,
-      varInternalTimer: null,
+      auxInternalTimer: null,
     };
   },
   computed: {
@@ -285,7 +283,8 @@ export default {
       try {
         const cond = (item) =>
           item[prop].toString().includes(this.filter.toString());
-        return items.filter(cond);
+        const result = items.filter(cond);
+        return result;
       } catch (error) {
         return items;
       }
@@ -313,9 +312,12 @@ export default {
       }
       this.RowSelected = [];
     },
+    fnActiveProcessWait() {
+      // in develop
+      this.varInternalTimer = !this.varInternalTimer;
+    },
   },
   created: async function () {
-    //  console.clear();
     this.headersSelected = this.headers;
   },
   watch: {
@@ -325,21 +327,23 @@ export default {
     varIsCheckAll: function () {
       this.fnSelectAll();
     },
-    varInternalTimer: function (val) {
-      if (val) {
-        let count = 0;
-        this.varInternalTimer = setInterval(() => {
-          count += 1;
-          console.log(count);
-          if (count > 3) {
-            this.varWaitAction = true;
-          }
-        }, 1000);
-      } else {
-        clearInterval(this.varInternalTimer);
-        this.varWaitAction = false;
-      }
-    },
+    // varInternalTimer: function (val) {
+    //   if (val) {
+    //     let count = 0;
+    //     this.auxInternalTimer = setInterval(() => {
+    //       count += 1;
+    //       console.log(this.varInternalTimer, count);
+    //       if (count > 1) {
+    //         this.varWaitAction = true;
+    //         count = 0;
+    //         clearInterval(this.auxInternalTimer);
+    //       }
+    //     }, 1000);
+    //   } else {
+    //     clearInterval(this.auxInternalTimer);
+    //     this.varWaitAction = false;
+    //   }
+    // },
   },
 };
 </script>
