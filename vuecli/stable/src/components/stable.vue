@@ -1,17 +1,5 @@
 <template>
   <div>
-    ava{{varInternalTimer}}
-    <input
-      type="button"
-      value="test loading process"
-      @click="varInternalTimer = !varInternalTimer"
-    />
-    <div class="waitAction" v-if="varWaitAction">
-      <p>loading process...</p>
-    </div>
-    <div class="waitAction" style="background-color: blue" v-if="loading">
-      <p>loading data...</p>
-    </div>
     <div v-if="!cmDisableGroup">
       <label for="grupo">Agrupar</label>
       <select v-model="groupby" id="grupo">
@@ -27,7 +15,7 @@
     </div>
 
     <div v-if="cmDisableFilter">
-      <select name="" id="" v-model="selectedFilter">
+      <select name="" id="">
         <option
           v-for="(header, index) of headersSelected"
           :key="index"
@@ -66,6 +54,7 @@
         </div>
       </div>
     </div>
+
     <div>
       <div>
         <div v-if="!varListGroupsTabsLimitExceded" class="tabsgrouping">
@@ -87,15 +76,6 @@
       <table>
         <thead v-if="cmDisableHeader">
           <tr>
-            <th v-if="letRowSelect">
-              <input
-                type="checkbox"
-                name=""
-                id=""
-                @click="fnSelectAll()"
-                v-model="varIsCheckAll"
-              />
-            </th>
             <th
               v-for="(header, index) in headersSelected"
               :key="index"
@@ -121,20 +101,12 @@
             </th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="(items, i) in cmTbodydata" :key="i">
-            <td v-if="letRowSelect">
-              <input
-                type="checkbox"
-                :value="fnSelectedItemsReturnMode(items)"
-                v-model="RowSelected"
-              />
-            </td>
-            <td v-for="(item, x) in items" :key="x">
-              {{ item }}
-            </td>
-          </tr>
-        </tbody>
+
+        <tr v-for="(items, i) in cmTbodydata" :key="i">
+          <td v-for="(item, x) in items" :key="x">
+            {{ item }}
+          </td>
+        </tr>
       </table>
     </div>
   </div>
@@ -154,17 +126,12 @@ export default {
     disableHeader: Boolean,
     disableGroup: Boolean,
     disableChangeColumns: Boolean,
-    letRowSelect: Boolean,
-    RowSelectObject: Boolean,
-    loading: Boolean,
   },
   data: function () {
     return {
       filter: "",
-      selectedFilter: "",
       groupby: null,
       headersSelected: [],
-      RowSelected: [],
       sortby: null,
       sortasc: false,
       preventOrder: false,
@@ -172,17 +139,12 @@ export default {
       varListGroupsTabs: null,
       varListGroupsTabsLimitExceded: false,
       varGroupTabSelected: null,
-      varIsCheckAll: false,
-      varInternalTimer: false,
-      varWaitAction: false,
-      varInternalTimer: null,
     };
   },
   computed: {
     cmTbodydata: function () {
-      const predata = this.fnFilterData(this.items, this.selectedFilter);
       if (!this.groupby) {
-        return this.fnRenderTable(predata);
+        return this.fnRenderTable(this.items);
       } else {
         this.fnRenderGroupTabs();
       }
@@ -193,6 +155,7 @@ export default {
     cmLimitGroupsQuantity: function () {
       return this.limitGroups || 10;
     },
+
     cmDisableFilter: function () {
       return !this.disableFilter;
     },
@@ -207,11 +170,6 @@ export default {
     },
     cmDisableChangeColumns: function () {
       return this.disableChangeColumns;
-    },
-    cmHeaderSelectable: function () {
-      return (
-        this.headersSelected.filter((x) => x.select == true)[0].value || false
-      );
     },
   },
   methods: {
@@ -262,6 +220,11 @@ export default {
       return result;
     },
     fnRenderTable(datos) {
+      if (this.filter.length > 5) {
+      console.log(this.filter)
+      //  datos = this.fnFilterData(datos, "title");
+      }
+
       if (!this.preventOrder) {
         if (this.sortby) {
           if (this.fnSortByNumber(this.sortby)) {
@@ -282,13 +245,9 @@ export default {
       return bodydata;
     },
     fnFilterData(items, prop) {
-      try {
-        const cond = (item) =>
-          item[prop].toString().includes(this.filter.toString());
-        return items.filter(cond);
-      } catch (error) {
-        return items;
-      }
+      // const cond = (item) =>
+      //   item[prop].toString().includes(this.filter.toString());
+      // return items.filter(cond);
     },
     fnRenderGroupTabs() {
       this.arrGroupData = this.fnGroupData(this.groupby);
@@ -301,45 +260,9 @@ export default {
         this.varListGroupsTabsLimitExceded = true;
       }
     },
-    fnSelectedItemsReturnMode(item) {
-      return this.RowSelectObject ? item : item[this.cmHeaderSelectable];
-    },
-    fnSelectAll() {
-      if (this.varIsCheckAll) {
-        this.RowSelected = this.cmTbodydata.map((x) => {
-          return this.RowSelectObject ? x : this.fnSelectedItemsReturnMode(x);
-        });
-        return;
-      }
-      this.RowSelected = [];
-    },
   },
   created: async function () {
-    //  console.clear();
     this.headersSelected = this.headers;
-  },
-  watch: {
-    RowSelected: function () {
-      this.$emit("returnSelectedItems", this.RowSelected);
-    },
-    varIsCheckAll: function () {
-      this.fnSelectAll();
-    },
-    varInternalTimer: function (val) {
-      if (val) {
-        let count = 0;
-        this.varInternalTimer = setInterval(() => {
-          count += 1;
-          console.log(count);
-          if (count > 3) {
-            this.varWaitAction = true;
-          }
-        }, 1000);
-      } else {
-        clearInterval(this.varInternalTimer);
-        this.varWaitAction = false;
-      }
-    },
   },
 };
 </script>
@@ -407,6 +330,8 @@ export default {
 }
 /* tabs */
 
+.tabsgrouping {
+}
 .tabsgroupbtns {
   float: left;
 }
@@ -414,50 +339,52 @@ export default {
 .tabsgroupbtns button {
   max-width: 200px;
   width: 163px;
+  background: #383434;
+  color: white;
   height: 33px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
   text-transform: capitalize;
-  background-color: transparent;
-  border-left: 1px solid black;
-  border-right: 1px solid black;
-  border-top: none;
-  border-bottom: none;
-}
-
-.tabsgrouping {
-  width: 100%;
-  margin: auto;
-
-  display: flex;
+  border: none;
 }
 
 .tabsgroupbtns button:hover {
-  animation: tabselect 0.2s;
+  background: #929191;
+  color: white;
+  font-size: 105%;
+  animation: tabselect 1s;
   animation-fill-mode: forwards;
 }
 
 .tabsgroupbtns button:active {
-  background: #c1bbca;
+  background: #a55555;
+  color: white;
+  font-size: 105%;
+  animation: tabselected;
+  animation-fill-mode: forwards;
 }
 
 @keyframes tabselect {
   from {
-    text-decoration: none;
+    transform: scale(100%);
   }
   to {
-    text-decoration: underline;
+    transform: scale(110%);
   }
 }
 
-.tabsgroupcontentdata {
-  display: none;
+@keyframes tabselected {
+  from {
+    background-color: #383434;
+  }
+  to {
+    background-color: red;
+  }
 }
 
-.waitAction {
-  width: 100%;
-  height: 100%;
-  background-color: red;
-  margin: auto;
-  display: flex;
-  z-index: 999;
+.tabsgroupcontent {
+}
+.tabsgroupcontentdata {
+  display: none;
 }
 </style>

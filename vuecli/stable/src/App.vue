@@ -9,29 +9,25 @@ export default {
       headers: [
         { value: "category", text: "categoria" },
         { value: "description", text: "descripcion" },
-        { value: "id", text: "id", type: "number", select: true },
+        { value: "id", text: "id", type: "number" },
         { value: "price", text: "precio" },
         { value: "rating", text: "raiting", type: "number" },
         { value: "title", text: "titulo" },
       ],
       items: [],
-      load: false,
     };
   },
   methods: {
     async api() {
-      this.load = true;
       const config = {
         url: "https://fakestoreapi.com/products",
         method: "get",
       };
       const datos = await axios(config);
       this.items = datos.data;
-      this.load = false;
+      console.log('respuesta recibida')
     },
-    logselected(val) {
-      console.log(val);
-    },
+
   },
 };
 </script>
@@ -40,14 +36,7 @@ export default {
   <div>
     <h2>SuperTable</h2>
     <input type="button" value="Consumir" @click="api()" />
-    <Stable
-      :headers="headers"
-      :items="items"
-      :letRowSelect="true"
-      :RowSelectObject="false"
-      @returnSelectedItems="logselected"
-      :loading="load"
-    />
+    <Stable :headers="headers" :items="items" />
   </div>
 </template>
  
